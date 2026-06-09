@@ -190,7 +190,8 @@ function dibujarZonas(datos){
     const zm=L.circleMarker([c.lat,c.lon],{radius:10+c.size*2,color:c.color,weight:4,fill:true,fillColor:c.color,fillOpacity:0.25});
     zm.bindPopup(`<div style="font-family:'Segoe UI';font-size:13px;min-width:220px"><div style="background:${c.color};color:white;padding:8px 12px;margin:-1px -1px 8px;border-radius:4px 4px 0 0"><b>🎯 Zona crítica ${c.id+1}</b></div><b>Siniestros:</b> ${c.size}<br><b>Fallecidos:</b> ${c.muertos}<br><b>Heridos:</b> ${c.heridos}<br><b>Radio:</b> ~100 metros</div>`,{maxWidth:260});
     if(showZon)zm.addTo(zLyr);
-    const buf=L.circle([c.lat,c.lon],{radius:150,color:c.color,weight:3,fill:true,fillColor:c.color,fillOpacity:0.12,dashArray:'8,5'});
+    const darkColor = c.color.replace('#FF6B6B','#CC0000').replace('#4ECDC4','#007A73').replace('#45B7D1','#005F8A').replace('#96CEB4','#2D6A4F').replace('#FFEAA7','#B8860B').replace('#DDA0DD','#7B2D8B').replace('#98D8C8','#1A6B5A');
+    const buf=L.circle([c.lat,c.lon],{radius:150,color:darkColor,weight:3,fill:true,fillColor:darkColor,fillOpacity:0.15,dashArray:'8,5'});
     buf.bindTooltip(`Zona crítica ${c.id+1} · Radio 150m`,{sticky:true});
     if(showBuf)buf.addTo(bLyr);
   });
