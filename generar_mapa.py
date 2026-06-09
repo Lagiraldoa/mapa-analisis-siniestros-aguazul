@@ -12,6 +12,16 @@ MESES = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
 COLOR_MAP = {'Con Muertos':'#E63946','Con Heridos':'#F4A261','Solo Daños':'#2A9D8F'}
 CLUSTER_COLORS = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8']
 
+AMENITY_CONFIG = {
+    'school':       {'label':'Institución educativa', 'color':'#3B82F6', 'icon':'🏫'},
+    'hospital':     {'label':'Hospital',              'color':'#EF4444', 'icon':'🏥'},
+    'clinic':       {'label':'Centro de salud',       'color':'#F97316', 'icon':'🏥'},
+    'pharmacy':     {'label':'Farmacia',              'color':'#22C55E', 'icon':'💊'},
+    'police':       {'label':'Policía',               'color':'#1E3A5F', 'icon':'👮'},
+    'fire_station': {'label':'Bomberos',              'color':'#DC2626', 'icon':'🚒'},
+    'park':         {'label':'Parque',                'color':'#16A34A', 'icon':'🌳'},
+}
+
 def limpiar_coord(v):
     try: return float(str(v).strip().replace(",","."))
     except: return None
@@ -60,7 +70,48 @@ def calcular_dbscan(df):
         })
     return df, cluster_info
 
-def generar_html(df, cluster_info):
+def descargar_equipamientos(center_lat, center_lon, dist=2000):
+    """Descarga equipamientos urbanos desde OpenStreetMap."""
+    amenities = []
+    try:
+        import osmnx as ox
+        tags = {
+            'amenity': ['school', 'hospital', 'clinic', 'police',
+                        'fire_station', 'pharmacy'],
+            'leisure': ['park']
+        }
+        gdf = ox.features_from_point((center_lat, center_lon), tags=tags, dist=dist)
+        for _, row in gdf.iterrows():
+            amenity_type = str(row.get('amenity', row.get('leisure', 'other')))
+            if amenity_type not in AMENITY_CONFIG:
+                continue
+            cfg = AMENITY_CONFIG[amenity_type]
+            # Get coordinates
+            try:
+                geom = row.geometry
+                if geom.geom_type == 'Point':
+                    lat, lon = geom.y, geom.x
+                else:
+                    lat, lon = geom.centroid.y, geom.centroid.x
+            except:
+                continue
+            name = str(row.get('name', cfg['label']))
+            if name == 'nan':
+                name = cfg['label']
+            amenities.append({
+                'lat': float(lat), 'lon': float(lon),
+                'type': amenity_type,
+                'name': name,
+                'label': cfg['label'],
+                'color': cfg['color'],
+                'icon': cfg['icon']
+            })
+        print(f"✓ {len(amenities)} equipamientos descargados desde OSM")
+    except Exception as e:
+        print(f"⚠ No se pudieron descargar equipamientos: {e}")
+    return amenities
+
+def generar_html(df, cluster_info, amenities):
     gravedad_col = next((c for c in df.columns if 'gravedad' in c.lower()), None)
     clase_col    = next((c for c in df.columns if 'clase' in c.lower() and 'acc' in c.lower()), None)
     dir_col      = next((c for c in df.columns if 'direcc' in c.lower()), None)
@@ -97,8 +148,16 @@ def generar_html(df, cluster_info):
     points_json = json.dumps(points_data, ensure_ascii=False)
     clusters_json = json.dumps(cluster_info, ensure_ascii=False)
     cluster_colors_json = json.dumps(CLUSTER_COLORS)
+    amenities_json = json.dumps(amenities, ensure_ascii=False)
     anios_opts = ''.join(f'<option value="{a}">{a}</option>' for a in anios)
     meses_opts = ''.join(f'<option value="{m}">{MESES.get(m,"Mes "+str(m))}</option>' for m in meses_disp)
+
+    # Build amenity legend items
+    tipos_presentes = list({a['type'] for a in amenities})
+    amenity_legend = ''.join(
+        f'<div class="aleg"><span>{AMENITY_CONFIG[t]["icon"]}</span><span class="alabel">{AMENITY_CONFIG[t]["label"]}</span></div>'
+        for t in tipos_presentes if t in AMENITY_CONFIG
+    ) if amenities else '<div style="color:#888;font-size:12px">No disponible</div>'
 
     html = """<!DOCTYPE html>
 <html lang="es">
@@ -143,6 +202,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e}
 .tbtn:hover{background:#303045;border-color:#555}
 .tbtn.on{background:#2d6a4f;border-color:#2d6a4f;color:#fff}
 .trow{display:flex;gap:6px;margin-bottom:8px}
+.trow2{display:flex;gap:6px;margin-bottom:8px}
 .zcard{background:#2a2a3e;border-radius:8px;padding:10px;border:1px solid #333;margin-bottom:6px;cursor:pointer;transition:all 0.2s}
 .zcard:hover{border-color:#555;background:#303045}
 .zcard-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -150,6 +210,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e}
 .ztitle{font-size:12px;font-weight:600;color:#ddd;flex:1}
 .zbadge{font-size:10px;background:rgba(255,255,255,0.08);color:#aaa;padding:2px 7px;border-radius:10px}
 .zstats{display:flex;gap:8px;font-size:11px;color:#888}
+.aleg{display:flex;align-items:center;gap:8px;font-size:12px;color:#bbb;margin-bottom:5px}
+.alabel{color:#ccc}
 #footer{padding:8px 14px;border-top:1px solid #2a2a3e;font-size:10px;color:#555;text-align:center;flex-shrink:0}
 .leaflet-control-attribution{font-size:9px}
 </style>
@@ -207,6 +269,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e}
       <button class="tbtn on" id="bZ" onclick="tZon()">🎯 Zonas</button>
       <button class="tbtn on" id="bB" onclick="tBuf()">⭕ Buffers</button>
     </div>
+    <div class="trow2">
+      <button class="tbtn on" id="bA" onclick="tAmen()">🏫 Equipamientos</button>
+    </div>
+    <div class="stitle">🏫 Equipamientos urbanos</div>
+    AMENITY_LEGEND
     <div class="stitle">🎯 Zonas críticas identificadas</div>
     <div id="zonas-list"></div>
   </div>
@@ -217,6 +284,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e}
 const PUNTOS = POINTS_JSON;
 const CLUSTERS = CLUSTERS_JSON;
 const CLUSTER_COLORS = CLUSTER_COLORS_JSON;
+const AMENITIES = AMENITIES_JSON;
 const map = L.map('map').setView([CENTER_LAT, CENTER_LON], 14);
 const bases = {
   'Calles (OpenStreetMap)': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}),
@@ -228,9 +296,12 @@ L.control.layers(bases,{},{position:'topright'}).addTo(map);
 let mLyr=L.layerGroup().addTo(map);
 let zLyr=L.layerGroup().addTo(map);
 let bLyr=L.layerGroup().addTo(map);
+let aLyr=L.layerGroup().addTo(map);
 let hLyr=null;
-let showCal=true,showPts=true,showZon=true,showBuf=true;
+let showCal=true,showPts=true,showZon=true,showBuf=true,showAmen=true;
 let gravActivas=new Set(['Con Muertos','Con Heridos','Solo Daños']);
+
+// Build zones list
 const zonasList=document.getElementById('zonas-list');
 CLUSTERS.forEach(c=>{
   const d=document.createElement('div');
@@ -239,12 +310,39 @@ CLUSTERS.forEach(c=>{
   d.onclick=()=>map.setView([c.lat,c.lon],17);
   zonasList.appendChild(d);
 });
+
+// Draw amenities
+function dibujarAmenities(){
+  aLyr.clearLayers();
+  if(!showAmen) return;
+  AMENITIES.forEach(a=>{
+    const icon = L.divIcon({
+      html:`<div style="background:${a.color};color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)">${a.icon}</div>`,
+      iconSize:[28,28], iconAnchor:[14,14], className:''
+    });
+    const m = L.marker([a.lat,a.lon],{icon});
+    m.bindPopup(`
+      <div style="font-family:'Segoe UI';font-size:13px;min-width:180px">
+        <div style="background:${a.color};color:white;padding:8px 12px;margin:-1px -1px 8px;border-radius:4px 4px 0 0">
+          <b>${a.icon} ${a.label}</b>
+        </div>
+        <div style="padding:0 4px 4px">
+          <b>${a.name}</b><br>
+          <a href="https://www.google.com/maps?q=${a.lat},${a.lon}" target="_blank" style="color:#1a73e8;font-size:12px">📍 Ver en Google Maps</a>
+        </div>
+      </div>`,{maxWidth:240});
+    m.bindTooltip(`${a.icon} ${a.name}`,{sticky:true});
+    m.addTo(aLyr);
+  });
+}
+
 function crearHeat(datos){
   if(hLyr)map.removeLayer(hLyr);
   if(!datos.length)return;
   hLyr=L.heatLayer(datos.map(p=>[p.lat,p.lon,1]),{radius:25,blur:15,maxZoom:16,gradient:{0.2:'yellow',0.5:'orange',0.8:'red',1.0:'darkred'}});
   if(showCal)hLyr.addTo(map);
 }
+
 function dibujarZonas(datos){
   zLyr.clearLayers();bLyr.clearLayers();
   CLUSTERS.forEach(c=>{
@@ -253,11 +351,12 @@ function dibujarZonas(datos){
     const zm=L.circleMarker([c.lat,c.lon],{radius:10+c.size*2,color:c.color,weight:4,fill:true,fillColor:c.color,fillOpacity:0.25});
     zm.bindPopup(`<div style="font-family:'Segoe UI';font-size:13px;min-width:220px"><div style="background:${c.color};color:white;padding:8px 12px;margin:-1px -1px 8px;border-radius:4px 4px 0 0"><b>🎯 Zona crítica ${c.id+1}</b></div><b>Siniestros:</b> ${c.size}<br><b>Fallecidos:</b> ${c.muertos}<br><b>Heridos:</b> ${c.heridos}<br><b>Radio:</b> ~100 metros</div>`,{maxWidth:260});
     if(showZon)zm.addTo(zLyr);
-    const buf=L.circle([c.lat,c.lon],{radius:150,color:c.color,weight:1.5,fill:true,fillColor:c.color,fillOpacity:0.06,dashArray:'6,4'});
+    const buf=L.circle([c.lat,c.lon],{radius:150,color:c.color,weight:3,fill:true,fillColor:c.color,fillOpacity:0.12,dashArray:'8,5'});
     buf.bindTooltip(`Zona crítica ${c.id+1} · Radio 150m`,{sticky:true});
     if(showBuf)buf.addTo(bLyr);
   });
 }
+
 function filtrar(){
   const anio=document.getElementById('fa').value;
   const mes=document.getElementById('fm').value;
@@ -269,7 +368,9 @@ function filtrar(){
     c.bindTooltip(`<b>${p.gravedad}</b> · ${p.zona}<br>${p.direccion}`,{sticky:true});
     c.addTo(mLyr);
   });
-  crearHeat(fil);dibujarZonas(fil);
+  crearHeat(fil);
+  dibujarZonas(fil);
+  dibujarAmenities();
   const sM=fil.filter(p=>p.gravedad==='Con Muertos').length;
   const sH=fil.filter(p=>p.gravedad==='Con Heridos').length;
   const sD=fil.filter(p=>p.gravedad==='Solo Daños').length;
@@ -286,11 +387,13 @@ function filtrar(){
   document.getElementById('cH').textContent=sH;
   document.getElementById('cD').textContent=sD;
 }
+
 function tg(g){const ids={'Con Muertos':'gM','Con Heridos':'gH','Solo Daños':'gD'};const el=document.getElementById(ids[g]);if(gravActivas.has(g)){gravActivas.delete(g);el.classList.add('off');}else{gravActivas.add(g);el.classList.remove('off');}filtrar();}
 function tCal(){showCal=!showCal;const b=document.getElementById('bC');if(showCal){if(hLyr)hLyr.addTo(map);b.classList.add('on');}else{if(hLyr)map.removeLayer(hLyr);b.classList.remove('on');}}
 function tPts(){showPts=!showPts;const b=document.getElementById('bP');if(showPts){mLyr.addTo(map);b.classList.add('on');}else{map.removeLayer(mLyr);b.classList.remove('on');}}
 function tZon(){showZon=!showZon;const b=document.getElementById('bZ');if(showZon){zLyr.addTo(map);b.classList.add('on');}else{map.removeLayer(zLyr);b.classList.remove('on');}}
 function tBuf(){showBuf=!showBuf;const b=document.getElementById('bB');if(showBuf){bLyr.addTo(map);b.classList.add('on');}else{map.removeLayer(bLyr);b.classList.remove('on');}}
+function tAmen(){showAmen=!showAmen;const b=document.getElementById('bA');if(showAmen){aLyr.addTo(map);b.classList.add('on');}else{map.removeLayer(aLyr);b.classList.remove('on');}dibujarAmenities();}
 filtrar();
 </script>
 </body>
@@ -301,8 +404,10 @@ filtrar();
     html = html.replace('POINTS_JSON', points_json)
     html = html.replace('CLUSTERS_JSON', clusters_json)
     html = html.replace('CLUSTER_COLORS_JSON', cluster_colors_json)
+    html = html.replace('AMENITIES_JSON', amenities_json)
     html = html.replace('CENTER_LAT', str(center_lat))
     html = html.replace('CENTER_LON', str(center_lon))
+    html = html.replace('AMENITY_LEGEND', amenity_legend)
     return html
 
 if __name__ == "__main__":
@@ -313,8 +418,13 @@ if __name__ == "__main__":
     print("Calculando zonas críticas (DBSCAN)...")
     df, cluster_info = calcular_dbscan(df)
     print(f"✓ {len(cluster_info)} zonas críticas identificadas")
+    print("Descargando equipamientos urbanos (OSM)...")
+    center_lat = df['lat'].mean()
+    center_lon = df['lon'].mean()
+    amenities = descargar_equipamientos(center_lat, center_lon)
     print("Generando mapa...")
-    html = generar_html(df, cluster_info)
+    html = generar_html(df, cluster_info, amenities)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(html)
     print(f"✓ Mapa guardado en {OUTPUT_FILE}")
+    print(f"✓ {len(amenities)} equipamientos incluidos")
