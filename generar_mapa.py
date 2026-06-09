@@ -165,48 +165,48 @@ def generar_html(df, cluster_info, amenities):
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f0f0}
 #map{position:fixed;top:0;left:360px;right:0;bottom:0;z-index:1}
-#sidebar{position:fixed;top:0;left:0;width:360px;height:100vh;background:#1e1e2e;color:#e0e0e0;z-index:10;display:flex;flex-direction:column;overflow:hidden;box-shadow:4px 0 20px rgba(0,0,0,0.4)}
+#sidebar{position:fixed;top:0;left:0;width:360px;height:100vh;background:#FFFFFF;color:#1a1a2e;z-index:10;display:flex;flex-direction:column;overflow:hidden;box-shadow:4px 0 20px rgba(0,0,0,0.15)}
 #header{background:linear-gradient(135deg,#2d6a4f,#1b4332);padding:14px 18px;flex-shrink:0}
 #header h2{font-size:14px;color:#fff;font-weight:700;line-height:1.4}
 #header p{font-size:11px;color:#a8d5c2;margin-top:3px}
 #scroll{flex:1;overflow-y:auto;padding:14px}
 #scroll::-webkit-scrollbar{width:4px}
-#scroll::-webkit-scrollbar-thumb{background:#444;border-radius:4px}
-.stitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin:14px 0 8px}
+#scroll::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
+.stitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#2d6a4f;margin:14px 0 8px}
 .stitle:first-child{margin-top:0}
 .fg{margin-bottom:8px}
-.fg label{font-size:11px;color:#aaa;display:block;margin-bottom:3px}
-.fg select{width:100%;padding:7px 10px;border-radius:7px;border:1px solid #333;background:#2a2a3e;color:#e0e0e0;font-size:12px;cursor:pointer;outline:none}
+.fg label{font-size:11px;color:#666;display:block;margin-bottom:3px}
+.fg select{width:100%;padding:7px 10px;border-radius:7px;border:1px solid #ddd;background:#f8f8f8;color:#1a1a2e;font-size:12px;cursor:pointer;outline:none}
 .fg select:hover{border-color:#2d6a4f}
 .grav-filters{display:flex;flex-direction:column;gap:6px}
-.gitem{display:flex;align-items:center;gap:8px;background:#2a2a3e;border-radius:7px;padding:7px 10px;cursor:pointer;border:1px solid #333;transition:all 0.2s;user-select:none}
-.gitem:hover{border-color:#555}
+.gitem{display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:7px;padding:7px 10px;cursor:pointer;border:1px solid #e5e7eb;transition:all 0.2s;user-select:none}
+.gitem:hover{border-color:#2d6a4f}
 .gdot{width:12px;height:12px;border-radius:50%;background:var(--c);flex-shrink:0;box-shadow:0 0 5px var(--c)}
-.glabel{font-size:12px;color:#ddd;flex:1}
+.glabel{font-size:12px;color:#333;flex:1}
 .gcnt{font-size:11px;font-weight:700;color:var(--c);background:rgba(255,255,255,0.05);padding:2px 7px;border-radius:20px}
 .gitem.off{opacity:0.3}
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.scard{background:#2a2a3e;border-radius:8px;padding:10px;border:1px solid #333;text-align:center}
+.scard{background:#f3f4f6;border-radius:8px;padding:10px;border:1px solid #e5e7eb;text-align:center}
 .scard.full{grid-column:1/-1}
-.snum{font-size:24px;font-weight:700;color:#fff;line-height:1}
+.snum{font-size:24px;font-weight:700;color:#1a1a2e;line-height:1}
 .snum.r{color:#E63946}.snum.o{color:#F4A261}.snum.t{color:#2A9D8F}.snum.y{color:#F9C74F}
 .slbl{font-size:9px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:0.5px;line-height:1.2}
-.tbtn{flex:1;padding:7px;border-radius:7px;border:1px solid #333;background:#2a2a3e;color:#ddd;font-size:11px;cursor:pointer;transition:all 0.2s;text-align:center}
-.tbtn:hover{background:#303045;border-color:#555}
+.tbtn{flex:1;padding:7px;border-radius:7px;border:1px solid #ddd;background:#f3f4f6;color:#333;font-size:11px;cursor:pointer;transition:all 0.2s;text-align:center}
+.tbtn:hover{background:#e5e7eb;border-color:#2d6a4f}
 .tbtn.on{background:#2d6a4f;border-color:#2d6a4f;color:#fff}
 .trow{display:flex;gap:6px;margin-bottom:8px}
 .trow2{display:flex;gap:6px;margin-bottom:8px}
-.zcard{background:#2a2a3e;border-radius:8px;padding:10px;border:1px solid #333;margin-bottom:6px;cursor:pointer;transition:all 0.2s}
-.zcard:hover{border-color:#555;background:#303045}
+.zcard{background:#f3f4f6;border-radius:8px;padding:10px;border:1px solid #e5e7eb;margin-bottom:6px;cursor:pointer;transition:all 0.2s}
+.zcard:hover{border-color:#2d6a4f;background:#e5e7eb}
 .zcard-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .zdot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
-.ztitle{font-size:12px;font-weight:600;color:#ddd;flex:1}
-.zbadge{font-size:10px;background:rgba(255,255,255,0.08);color:#aaa;padding:2px 7px;border-radius:10px}
-.zstats{display:flex;gap:8px;font-size:11px;color:#888}
+.ztitle{font-size:12px;font-weight:600;color:#1a1a2e;flex:1}
+.zbadge{font-size:10px;background:#e5e7eb;color:#555;padding:2px 7px;border-radius:10px}
+.zstats{display:flex;gap:8px;font-size:11px;color:#666}
 
-#footer{padding:8px 14px;border-top:1px solid #2a2a3e;font-size:10px;color:#555;text-align:center;flex-shrink:0}
+#footer{padding:8px 14px;border-top:1px solid #e5e7eb;font-size:10px;color:#888;text-align:center;flex-shrink:0}
 .leaflet-control-attribution{font-size:9px}
 </style>
 </head>
