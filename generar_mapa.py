@@ -152,12 +152,7 @@ def generar_html(df, cluster_info, amenities):
     anios_opts = ''.join(f'<option value="{a}">{a}</option>' for a in anios)
     meses_opts = ''.join(f'<option value="{m}">{MESES.get(m,"Mes "+str(m))}</option>' for m in meses_disp)
 
-    # Build amenity legend items
-    tipos_presentes = list({a['type'] for a in amenities})
-    amenity_legend = ''.join(
-        f'<div class="aleg"><span>{AMENITY_CONFIG[t]["icon"]}</span><span class="alabel">{AMENITY_CONFIG[t]["label"]}</span></div>'
-        for t in tipos_presentes if t in AMENITY_CONFIG
-    ) if amenities else '<div style="color:#888;font-size:12px">No disponible</div>'
+    amenity_legend = ''
 
     html = """<!DOCTYPE html>
 <html lang="es">
@@ -210,8 +205,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e}
 .ztitle{font-size:12px;font-weight:600;color:#ddd;flex:1}
 .zbadge{font-size:10px;background:rgba(255,255,255,0.08);color:#aaa;padding:2px 7px;border-radius:10px}
 .zstats{display:flex;gap:8px;font-size:11px;color:#888}
-.aleg{display:flex;align-items:center;gap:8px;font-size:12px;color:#bbb;margin-bottom:5px}
-.alabel{color:#ccc}
+
 #footer{padding:8px 14px;border-top:1px solid #2a2a3e;font-size:10px;color:#555;text-align:center;flex-shrink:0}
 .leaflet-control-attribution{font-size:9px}
 </style>
@@ -269,11 +263,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e}
       <button class="tbtn on" id="bZ" onclick="tZon()">🎯 Zonas</button>
       <button class="tbtn on" id="bB" onclick="tBuf()">⭕ Buffers</button>
     </div>
-    <div class="trow2">
-      <button class="tbtn on" id="bA" onclick="tAmen()">🏫 Equipamientos</button>
-    </div>
-    <div class="stitle">🏫 Equipamientos urbanos</div>
-    AMENITY_LEGEND
+
     <div class="stitle">🎯 Zonas críticas identificadas</div>
     <div id="zonas-list"></div>
   </div>
