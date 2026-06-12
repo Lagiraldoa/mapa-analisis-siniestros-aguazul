@@ -1,184 +1,276 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<title>Asistente de Siniestralidad Vial - Aguazul</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f4f0; min-height:100vh; display:flex; flex-direction:column; }
-#header { background:linear-gradient(135deg,#1B4332,#2D6A4F); padding:20px 24px; color:white; }
-#header h1 { font-size:20px; font-weight:700; margin-bottom:4px; }
-#header p { font-size:13px; color:#A8D5C2; }
-#stats-bar { background:#1B4332; color:#A8D5C2; font-size:11px; padding:6px 24px; text-align:center; }
-#chat-container { flex:1; max-width:800px; width:100%; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
-.msg { display:flex; gap:10px; align-items:flex-start; }
-.msg.user { flex-direction:row-reverse; }
-.avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
-.avatar.bot { background:#2D6A4F; }
-.avatar.user { background:#E63946; }
-.bubble { max-width:80%; padding:12px 16px; border-radius:12px; font-size:14px; line-height:1.6; }
-.bubble.bot { background:white; color:#1a1a2e; border-radius:4px 12px 12px 12px; box-shadow:0 1px 4px rgba(0,0,0,0.1); }
-.bubble.user { background:#2D6A4F; color:white; border-radius:12px 4px 12px 12px; }
-#suggestions { max-width:800px; width:100%; margin:0 auto; padding:0 20px 12px; display:flex; flex-wrap:wrap; gap:8px; }
-.suggestion { background:white; border:1px solid #2D6A4F; color:#2D6A4F; padding:8px 14px; border-radius:20px; font-size:12px; cursor:pointer; transition:all 0.2s; }
-.suggestion:hover { background:#2D6A4F; color:white; }
-#input-area { background:white; border-top:1px solid #e5e7eb; padding:16px 20px; }
-#input-row { max-width:800px; margin:0 auto; display:flex; gap:10px; align-items:flex-end; }
-#user-input { flex:1; padding:12px 16px; border:1px solid #ddd; border-radius:24px; font-size:14px; outline:none; font-family:inherit; }
-#user-input:focus { border-color:#2D6A4F; }
-#send-btn { width:44px; height:44px; border-radius:50%; background:#2D6A4F; border:none; color:white; font-size:18px; cursor:pointer; flex-shrink:0; }
-#send-btn:hover { background:#1B4332; }
-#send-btn:disabled { background:#ccc; cursor:not-allowed; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agente de Seguridad Vial – Aguazul</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #f0f4f0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      color: #1a1a1a;
+    }
+
+    header {
+      background: #1B4332;
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    header .icon {
+      font-size: 28px;
+    }
+
+    header div h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    header div p {
+      font-size: 11px;
+      color: #52B788;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-wrap: break-word;
+    }
+
+    .bubble.user {
+      background: #2D6A4F;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .bubble.bot {
+      background: white;
+      color: #1a1a1a;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .bubble.bot.typing {
+      color: #888;
+      font-style: italic;
+    }
+
+    .bubble .label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+      opacity: 0.7;
+    }
+
+    #input-area {
+      display: flex;
+      padding: 12px 16px;
+      gap: 10px;
+      background: white;
+      border-top: 1px solid #d4e6da;
+    }
+
+    #user-input {
+      flex: 1;
+      border: 1.5px solid #52B788;
+      border-radius: 24px;
+      padding: 10px 16px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+      outline: none;
+      resize: none;
+      line-height: 1.4;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    #user-input:focus {
+      border-color: #2D6A4F;
+    }
+
+    #send-btn {
+      background: #1B4332;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    #send-btn:hover { background: #2D6A4F; }
+    #send-btn:disabled { background: #aaa; cursor: default; }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 12px;
+    }
+
+    .suggestion-btn {
+      background: white;
+      border: 1.5px solid #52B788;
+      color: #1B4332;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .suggestion-btn:hover {
+      background: #1B4332;
+      color: white;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 10px;
+      color: #888;
+      padding: 6px;
+      background: #f0f4f0;
+    }
+  </style>
 </head>
 <body>
-<div id="header">
-  <h1>Asistente de Siniestralidad Vial</h1>
-  <p>Municipio de Aguazul, Casanare · Secretaria de Gobierno · ROT ANSV</p>
-</div>
-<div id="stats-bar" id="stats-bar">Cargando datos...</div>
+
+<header>
+  <div class="icon">🛡️</div>
+  <div>
+    <h1>Agente de Seguridad Vial</h1>
+    <p>Observatorio Territorial · Aguazul, Casanare · ANSV / ROT</p>
+  </div>
+</header>
+
 <div id="chat-container">
-  <div class="msg">
-    <div class="avatar bot">🤖</div>
-    <div class="bubble bot">
-      Hola, soy el asistente virtual de siniestralidad vial de <b>Aguazul, Casanare</b>. Puedo responder preguntas sobre los siniestros viales registrados en el municipio. Puedes preguntarme sobre el numero de siniestros, fallecidos, heridos, tipos de accidentes, zonas, fechas y mas.
-    </div>
+  <div class="bubble bot">
+    <div class="label">Agente OTSV</div>
+    Hola, soy el agente de seguridad vial del municipio de Aguazul. Puedo responder preguntas sobre los siniestros viales registrados, tendencias, zonas críticas y más. ¿En qué te puedo ayudar?
   </div>
 </div>
-<div id="suggestions">
-  <button class="suggestion" onclick="enviarSugerencia(this)">Cuantos siniestros hay en total?</button>
-  <button class="suggestion" onclick="enviarSugerencia(this)">Cuantas personas han fallecido?</button>
-  <button class="suggestion" onclick="enviarSugerencia(this)">Cual es el tipo de accidente mas frecuente?</button>
-  <button class="suggestion" onclick="enviarSugerencia(this)">En que año ocurrieron mas siniestros?</button>
-  <button class="suggestion" onclick="enviarSugerencia(this)">Cuantos siniestros hay en zona rural?</button>
+
+<div class="suggestions">
+  <button class="suggestion-btn" onclick="sendSuggestion('¿Cuántos siniestros hay registrados?')">📊 Total de siniestros</button>
+  <button class="suggestion-btn" onclick="sendSuggestion('¿Cuáles son las zonas con más siniestros?')">📍 Zonas críticas</button>
+  <button class="suggestion-btn" onclick="sendSuggestion('¿Qué clase de siniestros son más frecuentes?')">🔍 Tipos frecuentes</button>
+  <button class="suggestion-btn" onclick="sendSuggestion('¿Cuántos siniestros con víctimas fatales hay?')">⚠️ Víctimas fatales</button>
 </div>
+
 <div id="input-area">
-  <div id="input-row">
-    <input type="text" id="user-input" placeholder="Escribe tu pregunta sobre siniestros en Aguazul...">
-    <button id="send-btn" onclick="enviar()">&#9658;</button>
-  </div>
+  <textarea id="user-input" rows="1" placeholder="Escribe tu pregunta aquí..."></textarea>
+  <button id="send-btn" onclick="sendMessage()">➤</button>
 </div>
+
+<footer>OTSV Aguazul · Red de Observatorios Territoriales · ANSV Colombia</footer>
+
 <script>
-var API_KEY = "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";
-var API_URL = "https://openrouter.ai/api/v1/chat/completions";
-var SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAwZ4dc9y6iaaz0Q-gzZX5iredCR-ImuFpEWjMByMk_UialzXj5YX5C_jx_iL5CzY6d7VUzRFl3S5y/pub?gid=1451450324&single=true&output=csv";
+  const WORKER_URL = "https://odd-sky-849b.gandres7723.workers.dev";
 
-var datosCSV = "";
-var cargando = false;
+  const chatContainer = document.getElementById("chat-container");
+  const userInput = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
 
-function cargarDatos() {
-  var proxies = [
-    "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_URL),
-    "https://corsproxy.io/?url=" + encodeURIComponent(SHEET_URL),
-    "https://proxy.cors.sh/" + SHEET_URL
-  ];
-  
-  function intentarProxy(idx) {
-    if(idx >= proxies.length) {
-      document.getElementById("stats-bar").textContent = "Error cargando datos. Refresca la pagina.";
-      return;
+  userInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
-    fetch(proxies[idx])
-      .then(function(r) {
-        if(!r.ok) throw new Error("Status " + r.status);
-        return r.text();
-      })
-      .then(function(csv) {
-        datosCSV = csv;
-        var filas = csv.trim().split("\n").length - 1;
-        document.getElementById("stats-bar").textContent = filas + " siniestros cargados en tiempo real desde Google Sheets";
-      })
-      .catch(function(e) {
-        console.log("Proxy " + idx + " fallo, intentando siguiente...");
-        intentarProxy(idx + 1);
-      });
-  }
-  intentarProxy(0);
-}
-
-function agregarMensaje(texto, tipo, id) {
-  var container = document.getElementById("chat-container");
-  var div = document.createElement("div");
-  div.className = "msg " + tipo;
-  if(id) div.id = id;
-  var emoji = tipo === "bot" ? "🤖" : "👤";
-  div.innerHTML = '<div class="avatar ' + tipo + '">' + emoji + '</div><div class="bubble ' + tipo + '">' + texto + '</div>';
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
-
-function actualizarMensaje(id, texto) {
-  var el = document.getElementById(id);
-  if(el) {
-    el.querySelector(".bubble").innerHTML = texto;
-    document.getElementById("chat-container").scrollTop = 99999;
-  }
-}
-
-function enviar() {
-  var input = document.getElementById("user-input");
-  var pregunta = input.value.trim();
-  if(!pregunta || cargando) return;
-
-  input.value = "";
-  cargando = true;
-  document.getElementById("send-btn").disabled = true;
-  document.getElementById("suggestions").style.display = "none";
-
-  agregarMensaje(pregunta, "user", null);
-
-  var loadId = "loading-" + Date.now();
-  agregarMensaje("Analizando los datos...", "bot", loadId);
-
-  var prompt = "Eres un asistente especializado en siniestralidad vial del municipio de Aguazul, Casanare, Colombia. Tienes acceso a la base de datos oficial de siniestros viales. Responde siempre en espanol de forma clara y accesible para ciudadanos. Usa los datos del CSV para dar respuestas precisas con numeros exactos. Se conciso pero informativo. DATOS DE SINIESTROS EN FORMATO CSV: " + datosCSV.substring(0, 6000) + " PREGUNTA DEL CIUDADANO: " + pregunta + " Responde de forma directa y util:";
-
-  fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + API_KEY,
-      "HTTP-Referer": "https://lagiraldoa.github.io",
-      "X-Title": "Agente Siniestros Aguazul"
-    },
-    body: JSON.stringify({
-      model: "meta-llama/llama-3.1-8b-instruct:free",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.3,
-      max_tokens: 1024
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if(data.choices && data.choices[0]) {
-      var respuesta = data.choices[0].message.content;
-      respuesta = respuesta.replace(/\n/g, "<br>");
-      actualizarMensaje(loadId, respuesta);
-    } else {
-      console.error("Respuesta inesperada:", JSON.stringify(data));
-      actualizarMensaje(loadId, "No pude procesar tu pregunta. Error: " + JSON.stringify(data).substring(0, 100));
-    }
-    cargando = false;
-    document.getElementById("send-btn").disabled = false;
-  })
-  .catch(function(e) {
-    console.error("Error:", e);
-    actualizarMensaje(loadId, "Error de conexion. Verifica tu internet e intenta de nuevo.");
-    cargando = false;
-    document.getElementById("send-btn").disabled = false;
   });
-}
 
-function enviarSugerencia(btn) {
-  document.getElementById("user-input").value = btn.textContent;
-  enviar();
-}
+  userInput.addEventListener("input", function() {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 120) + "px";
+  });
 
-document.getElementById("user-input").addEventListener("keydown", function(e) {
-  if(e.key === "Enter") enviar();
-});
+  function addBubble(text, role, isTyping = false) {
+    const bubble = document.createElement("div");
+    bubble.className = `bubble ${role}${isTyping ? " typing" : ""}`;
+    if (role === "bot") {
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = "Agente OTSV";
+      bubble.appendChild(label);
+    }
+    const content = document.createElement("span");
+    content.textContent = text;
+    bubble.appendChild(content);
+    chatContainer.appendChild(bubble);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return bubble;
+  }
 
-cargarDatos();
+  function sendSuggestion(text) {
+    userInput.value = text;
+    sendMessage();
+  }
+
+  async function sendMessage() {
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    userInput.value = "";
+    userInput.style.height = "auto";
+    sendBtn.disabled = true;
+
+    addBubble(message, "user");
+    const typingBubble = addBubble("Consultando datos...", "bot", true);
+
+    try {
+      const res = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await res.json();
+      typingBubble.classList.remove("typing");
+      typingBubble.querySelector("span").textContent = data.response || "Sin respuesta.";
+    } catch (err) {
+      typingBubble.classList.remove("typing");
+      typingBubble.querySelector("span").textContent = "Error de conexión con el servidor. Intenta de nuevo.";
+    }
+
+    sendBtn.disabled = false;
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
 </script>
 </body>
 </html>
