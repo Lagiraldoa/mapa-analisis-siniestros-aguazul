@@ -62,23 +62,39 @@ body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f4f0; min-height:1
 <script>
 var API_KEY = "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";
 var API_URL = "https://openrouter.ai/api/v1/chat/completions";
-var SHEET_URL = "https://corsproxy.io/?url=https://docs.google.com/spreadsheets/d/e/2PACX-1vTAwZ4dc9y6iaaz0Q-gzZX5iredCR-ImuFpEWjMByMk_UialzXj5YX5C_jx_iL5CzY6d7VUzRFl3S5y/pub?gid=1451450324&single=true&output=csv";
+var SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAwZ4dc9y6iaaz0Q-gzZX5iredCR-ImuFpEWjMByMk_UialzXj5YX5C_jx_iL5CzY6d7VUzRFl3S5y/pub?gid=1451450324&single=true&output=csv";
 
 var datosCSV = "";
 var cargando = false;
 
 function cargarDatos() {
-  fetch(SHEET_URL)
-    .then(function(r) { return r.text(); })
-    .then(function(csv) {
-      datosCSV = csv;
-      var filas = csv.trim().split("\n").length - 1;
-      document.getElementById("stats-bar").textContent = filas + " siniestros cargados en tiempo real desde Google Sheets";
-    })
-    .catch(function(e) {
-      document.getElementById("stats-bar").textContent = "Error cargando datos";
-      console.error(e);
-    });
+  var proxies = [
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_URL),
+    "https://corsproxy.io/?url=" + encodeURIComponent(SHEET_URL),
+    "https://proxy.cors.sh/" + SHEET_URL
+  ];
+  
+  function intentarProxy(idx) {
+    if(idx >= proxies.length) {
+      document.getElementById("stats-bar").textContent = "Error cargando datos. Refresca la pagina.";
+      return;
+    }
+    fetch(proxies[idx])
+      .then(function(r) {
+        if(!r.ok) throw new Error("Status " + r.status);
+        return r.text();
+      })
+      .then(function(csv) {
+        datosCSV = csv;
+        var filas = csv.trim().split("\n").length - 1;
+        document.getElementById("stats-bar").textContent = filas + " siniestros cargados en tiempo real desde Google Sheets";
+      })
+      .catch(function(e) {
+        console.log("Proxy " + idx + " fallo, intentando siguiente...");
+        intentarProxy(idx + 1);
+      });
+  }
+  intentarProxy(0);
 }
 
 function agregarMensaje(texto, tipo, id) {
